@@ -1197,7 +1197,7 @@ p11_rpc_buffer_get_attribute (p11_buffer *buffer,
 			      size_t *offset,
 			      CK_ATTRIBUTE *attr)
 {
-	uint32_t type, length;
+	uint32_t type, length, decode_length;
 	unsigned char validity;
 	static const p11_rpc_value_decoder decoders[] = {
 		p11_rpc_buffer_get_byte_value,
@@ -1235,8 +1235,13 @@ p11_rpc_buffer_get_attribute (p11_buffer *buffer,
 	assert (decoder != NULL);
 	if (!decoder (buffer, offset, attr->pValue, &attr->ulValueLen))
 		return false;
-	if (!attr->pValue)
+	if (!attr->pValue) {
+		decode_length = attr->ulValueLen;
 		attr->ulValueLen = length;
+		if (decode_length > length) {
+			return false;
+		}
+	}
 	attr->type = type;
 	return true;
 }
